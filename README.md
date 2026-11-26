@@ -7,5 +7,7 @@ Interactive 3D lunar sightline verifier and printable 2-page PDF guide for **You
 - **3D Line-of-Sight Model:** Official NYC Open Data 3D Building Footprints (`5zhs-2jue`) with `+4 ft` parapet allowance and `≥ 1.5°` clearance, verified clear across the full **20 minutes post-tzeis**.
 
 ## Files
-- `docs/index.html` — Self-contained interactive calendar + 3D viewer (served via GitHub Pages)
-- `docs/YIWS_Kiddush_Levanah_5787.pdf` — Finalized 2-page printable PDF (1 double-sided US Letter sheet)
+- `docs/yiws/index.html` — Self-contained interactive calendar + 3D viewer (served via GitHub Pages)
+- `docs/yiws/YIWS_Kiddush_Levanah_5787.pdf` — Finalized 2-page printable PDF (1 double-sided US Letter sheet)
+
+Live site: https://aaronhpriven.github.io/levanah-sightlines/yiws/
