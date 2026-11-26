@@ -300,6 +300,7 @@ const PdfExport = (() => {
       await ensureLibs();
       await new Promise(r => setTimeout(r, 0));
       build();
+      if (typeof trackEvent === "function") trackEvent("event/pdf-download", "PDF downloaded");
     } catch (e) {
       console.error(e);
       alert(`Could not create the PDF: ${e.message}`);

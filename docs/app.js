@@ -261,6 +261,15 @@ function choosePlace(r, shortOverride) {
   loadPlace();
 }
 
+// ---------------------------------------------------------------- analytics (GoatCounter)
+function trackEvent(path, title = "") {
+  try {
+    if (window.goatcounter && typeof window.goatcounter.count === "function") {
+      window.goatcounter.count({ path, title, event: true });
+    }
+  } catch { /* ignore */ }
+}
+
 // ---------------------------------------------------------------- loading pipeline
 async function loadPlace() {
   if (!PLACE) return;
@@ -280,10 +289,13 @@ async function loadPlace() {
     SHUL = model.shul;
     BUILDINGS = model.buildings;
     CANDIDATES = model.candidates;
+    trackEvent(model.nycMode ? "event/load/nyc" : "event/load/osm", model.nycMode ? "Location loaded (NYC)" : "Location loaded (OSM)");
+    if (model.tz) trackEvent(`event/tz/${model.tz}`, `Region: ${model.tz}`);
     await solveNights(token, log);
   } catch (e) {
     if (token !== loadToken) return;
     console.error(e);
+    trackEvent("event/load-error", "Location load failed");
     log.error(`<strong>Could not load building data for this location.</strong> ${esc(e.message)}<br/>
       These are free public map servers and are sometimes overloaded &mdash; please try again in a minute or two.
       <button class="btn secondary" type="button" style="margin-left:6px;padding:5px 10px" onclick="loadPlace()">Try again</button>`);

@@ -56,6 +56,7 @@ function openViewer(id) {
   document.getElementById("legEst").style.display = BUILDINGS.some(b => b.est === "default") ? "flex" : "none";
   document.getElementById("btnFpShul").textContent = PLACE.atLabel;
   overlay.classList.add("open");
+  if (typeof trackEvent === "function") trackEvent("event/viewer-open", "3D viewer opened");
   setPreset("iso", false);
   recomputeAndRender();
   requestAnimationFrame(() => recomputeAndRender());
