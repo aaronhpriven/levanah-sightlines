@@ -168,6 +168,14 @@
   .tag-ms { background: rgba(56,189,248,0.16); color: #7dd3fc; }
   .tag-yk { background: rgba(245,158,11,0.18); color: #fcd34d; }
   .tag-9a { background: rgba(244,63,94,0.18); color: #fda4af; }
+  .tag-next { background: rgba(34,197,94,0.22); color: #86efac; border: 1px solid rgba(34,197,94,0.45); }
+  tbody tr.past-night { opacity: 0.52; }
+  tbody tr.next-night {
+    background: rgba(56, 189, 248, 0.09);
+    box-shadow: inset 3px 0 0 #38bdf8;
+    scroll-margin-top: 64px;
+  }
+  html[dir="rtl"] tbody tr.next-night { box-shadow: inset -3px 0 0 #38bdf8; }
   .spot-name { font-weight: 700; color: #86efac; }
   .spot-meta { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
   .spot-none { font-weight: 600; color: #fca5a5; }
@@ -254,11 +262,52 @@
     padding: 10px;
     min-height: 0;
   }
+  .v-mob-tabs {
+    display: none;
+    gap: 6px;
+    padding: 6px 8px 2px;
+    background: var(--bg);
+  }
+  .v-mob-tab {
+    flex: 1;
+    background: var(--panel);
+    color: var(--muted);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 7px 6px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+  }
+  .v-mob-tab.active { background: #2563eb; border-color: #3b82f6; color: #fff; }
   @media (max-width: 860px) {
+    #viewerOverlay { height: 100vh; height: 100dvh; }
+    .v-header { padding: 7px 10px; gap: 6px; }
+    .v-left { gap: 6px; width: 100%; }
+    .v-title { flex: 1; min-width: 0; }
+    .v-title h2 { font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .v-title .sub { font-size: 10.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .stats { width: 100%; gap: 6px; }
+    .pill { font-size: 11px; padding: 3px 8px; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .timebar { padding: 6px 10px; gap: 6px 8px; }
+    .timebar-label { min-width: 0; font-size: 11.5px; }
+    .moon-readout { min-width: 0; font-size: 11px; margin-inline-start: auto; }
+    .slider-wrap { order: 10; flex: 1 0 100%; min-width: 100%; }
+    input[type="range"] { height: 24px; }
+    .v-mob-tabs { display: flex; }
     .v-main {
-      grid-template-columns: 1fr;
-      grid-template-rows: 1fr 1fr 190px;
+      display: flex;
+      flex-direction: column;
+      padding: 6px 8px 8px;
+      gap: 0;
     }
+    .v-main > .card { display: none; flex: 1; }
+    .v-main > .card.mob-active { display: flex; }
+    .card-hdr { padding: 6px 9px; font-size: 11.5px; }
+    .card-hdr .hint { display: none; }
+    .legend { font-size: 9.5px; padding: 4px 6px; gap: 2px; bottom: 6px; left: 6px; max-width: 62%; }
+    .swatch { width: 9px; height: 8px; }
   }
   .card {
     background: var(--panel);
@@ -422,6 +471,134 @@
   .home-links .disclaimer { color: #94a3b8; font-size: 11.5px; }
   #c3d { touch-action: none; cursor: grab; }
   #c3d:active { cursor: grabbing; }
+
+  /* -------- LANGUAGE SELECTOR & FIND NOW -------- */
+  .lang-sel {
+    appearance: none; -webkit-appearance: none;
+    background: var(--panel) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' fill='none' stroke='%2394a3b8' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 9px center;
+    color: var(--text); border: 1px solid var(--border2);
+    border-radius: 8px; padding: 6px 28px 6px 10px; font-size: 12.5px; font-weight: 600; cursor: pointer;
+    line-height: 1.3;
+  }
+  .lang-sel:hover { border-color: #475569; background-color: #1e293b; }
+  html[dir="rtl"] .lang-sel {
+    background-position: left 9px center;
+    padding: 6px 10px 6px 28px;
+  }
+  .now-hero {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    width: 100%; text-align: start; margin-bottom: 12px; padding: 11px 14px;
+    background: linear-gradient(135deg, rgba(250,204,21,0.14), rgba(56,189,248,0.12));
+    border: 1px solid rgba(250,204,21,0.42); border-radius: 10px;
+    color: #fef9c3; cursor: pointer; transition: background 0.15s, border-color 0.15s;
+  }
+  .now-hero:hover { background: linear-gradient(135deg, rgba(250,204,21,0.22), rgba(56,189,248,0.18)); border-color: #fde047; }
+  .now-hero-title { font-size: 14.5px; font-weight: 800; color: #fef08a; }
+  .now-hero-sub { font-size: 12px; color: #cbd5e1; margin-top: 2px; }
+  .now-hero-arrow { font-size: 18px; color: #fde047; font-weight: 700; flex: none; }
+
+  /* -------- FIND THE MOON NOW MODAL -------- */
+  #nowOverlay {
+    display: none; position: fixed; inset: 0; z-index: 120;
+    background: rgba(2, 6, 23, 0.86); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center; padding: 12px;
+    overflow-y: auto;
+  }
+  #nowOverlay.open { display: flex; }
+  .now-modal {
+    width: 100%; max-width: 440px; max-height: 94dvh; overflow-y: auto;
+    background: var(--panel); border: 1px solid var(--border2); border-radius: 14px;
+    padding: 16px; display: flex; flex-direction: column; gap: 11px;
+  }
+  .now-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .now-top h2 { margin: 0; font-size: 17px; color: #fef08a; }
+  .now-loc-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
+  .now-pill {
+    font-size: 12px; font-weight: 700; padding: 6px 10px; border-radius: 8px; text-align: center;
+  }
+  .now-pill.clear { background: rgba(34,197,94,0.14); border: 1px solid rgba(34,197,94,0.45); color: #86efac; }
+  .now-pill.neutral { background: rgba(148,163,184,0.1); border: 1px solid #334155; color: #cbd5e1; }
+  .now-compass-box { width: 100%; height: 240px; position: relative; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+  .now-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .now-stat { background: var(--panel2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 6px; text-align: center; }
+  .now-stat .k { font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .now-stat .v { font-size: 15px; font-weight: 800; color: #f8fafc; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .now-alt-bar { height: 6px; background: #1e293b; border-radius: 999px; overflow: hidden; }
+  #nowAltFill { height: 100%; width: 0%; background: linear-gradient(90deg, #f59e0b, #fde047); transition: width 0.3s; }
+  .now-guide { font-size: 13px; color: #e2e8f0; line-height: 1.45; text-align: center; }
+  .now-cue {
+    display: none; font-size: 13px; font-weight: 700; text-align: center;
+    padding: 7px 10px; border-radius: 8px; background: rgba(56,189,248,0.12); border: 1px solid rgba(56,189,248,0.35); color: #bae6fd;
+  }
+  .now-cue .cue-ok { color: #86efac; }
+  .now-bldg-res {
+    background: var(--panel2); border: 1px solid var(--border2); border-radius: 9px;
+    padding: 9px 11px; font-size: 12.5px; line-height: 1.45;
+  }
+  .now-bldg-btn { width: 100%; }
+
+  /* -------- MOBILE HOME & CALENDAR CARDS (<= 720px) -------- */
+  @media (max-width: 720px) {
+    #calView { padding: 14px 12px 32px; }
+    .cal-header { align-items: flex-start; gap: 10px; padding-bottom: 12px; margin-bottom: 12px; }
+    .cal-header h1 { font-size: 19px; line-height: 1.25; }
+    .cal-header .sub { font-size: 12px; }
+    .header-right { width: 100%; justify-content: flex-start; gap: 8px; }
+    .badge-shul { width: 100%; max-width: 100%; text-align: start; font-size: 12px; padding: 8px 11px; }
+    .search-card { padding: 12px; }
+    .search-row input[type="text"] { min-width: 0; flex: 1 0 100%; font-size: 16px; }
+    .search-row .btn { flex: 1; padding: 10px 10px; text-align: center; }
+    .examples { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+    .examples span { flex: none; }
+    .chip { flex: none; }
+    .toolbar {
+      position: sticky; top: 0; z-index: 20;
+      background: rgba(11, 17, 32, 0.92); backdrop-filter: blur(8px);
+      padding: 6px 0; margin: 0 0 8px; gap: 6px;
+    }
+    .tabs { width: 100%; }
+    .tab-btn { flex: 1; padding: 7px 8px; font-size: 12px; text-align: center; }
+    .tip-pill { display: none; }
+    tbody tr.next-night { border-color: #38bdf8; box-shadow: 0 0 0 1px rgba(56,189,248,0.35); scroll-margin-top: 56px; }
+
+    /* Convert wide 6-column table into clean mobile cards */
+    .table-wrap { background: transparent; border: none; overflow: visible; }
+    table, tbody { display: block; width: 100%; }
+    thead { display: none; }
+    tbody tr {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 4px 10px;
+      background: var(--panel);
+      border: 1px solid var(--border2);
+      border-radius: 11px;
+      padding: 11px 12px;
+      margin-bottom: 9px;
+    }
+    tbody tr:last-child { border-bottom: 1px solid var(--border2); margin-bottom: 0; }
+    tbody td { display: block; padding: 0; }
+    td.td-night { grid-column: 1; grid-row: 1; }
+    td.td-action { grid-column: 2; grid-row: 1; align-self: start; }
+    td.td-spot { grid-column: 1 / -1; grid-row: 2; padding-top: 6px; margin-top: 4px; border-top: 1px solid var(--border); }
+    td.td-tzeis { grid-column: 1; grid-row: 3; font-size: 12px; color: #cbd5e1; padding-top: 4px; }
+    td.td-moon { grid-column: 2; grid-row: 3; font-size: 12px; color: #cbd5e1; text-align: end; padding-top: 4px; }
+    td.td-month { grid-column: 1 / -1; grid-row: 4; font-size: 11px; color: var(--muted); padding-top: 2px; }
+    td.td-month .m-name { display: inline; font-size: 11px; font-weight: 600; color: var(--muted); }
+    td.td-month .m-win { display: inline; margin-inline-start: 6px; }
+    .view-btn { padding: 5px 9px; font-size: 11px; }
+  }
+
+  /* -------- RTL SUPPORT (Hebrew / Yiddish) -------- */
+  html[dir="rtl"] .badge-shul { text-align: left; }
+  html[dir="rtl"] .result { text-align: right; }
+  html[dir="rtl"] .result .src { margin-left: 0; margin-right: 6px; }
+  html[dir="rtl"] thead th { text-align: right; }
+  html[dir="rtl"] .moon-readout { text-align: left; }
+  html[dir="rtl"] .tag { margin-left: 0; margin-right: 5px; }
+  html[dir="rtl"] .status .spinner { margin-right: 0; margin-left: 8px; }
+  html[dir="rtl"] .results-msg .spinner { margin-right: 0; margin-left: 7px; }
+  html[dir="rtl"] .st-time { margin-left: 0; margin-right: auto; padding-left: 0; padding-right: 12px; }
+  html[dir="rtl"] .now-hero-arrow { transform: scaleX(-1); }
 </style>
 </head>
 <body>
@@ -430,33 +607,49 @@
 <div id="calView">
   <div class="cal-header">
     <div>
-      <h1>Kiddush Levanah &mdash; 3D Sightline Guide</h1>
-      <div class="sub">Find the closest spot to any shul or address where the moon clears the rooftops after tzeis</div>
+      <h1 data-i18n="appTitle">Kiddush Levanah &mdash; 3D Sightline Guide</h1>
+      <div class="sub" data-i18n="appSub">Find the closest spot to any shul or address where the moon clears the rooftops after tzeis</div>
     </div>
     <div class="header-right">
-      <button id="btnPdf" class="btn" style="display:none;background:#16a34a;border-color:#22c55e">&#128424; Download PDF</button>
-      <button id="btnShare" class="btn secondary" style="display:none">&#128279; Copy Link</button>
+      <select id="langSelect" class="lang-sel" aria-label="Language">
+        <option value="en">English</option>
+        <option value="he">עברית</option>
+        <option value="yi">ייִדיש</option>
+        <option value="fr">Français</option>
+        <option value="ru">Русский</option>
+        <option value="es">Español</option>
+      </select>
+      <button id="btnPdf" class="btn" style="display:none;background:#16a34a;border-color:#22c55e">&#128424; <span data-i18n="downloadPdf">Download PDF</span></button>
+      <button id="btnShare" class="btn secondary" style="display:none">&#128279; <span data-i18n="copyLink">Copy Link</span></button>
       <div id="placeBadge" class="badge-shul" style="display:none"></div>
     </div>
   </div>
 
   <div class="search-card">
+    <button type="button" id="btnFindNow" class="now-hero">
+      <div>
+        <div class="now-hero-title">&#127769; <span data-i18n="findNowBtn">Find the Moon Right Now</span></div>
+        <div class="now-hero-sub" data-i18n="findNowSub">Live compass &amp; elevation for your current spot</div>
+      </div>
+      <span class="now-hero-arrow">&rarr;</span>
+    </button>
+
     <form id="searchForm" class="search-row" autocomplete="off">
-      <input id="q" type="text" placeholder="Start typing a shul name, street address, or lat,lon (e.g. 210 W 91st St, New York)" />
-      <button class="btn" type="submit" id="btnSearch">Search</button>
-      <button class="btn secondary" type="button" id="btnGeo">&#128205; My Location</button>
+      <input id="q" type="text" data-i18n-placeholder="searchPlaceholder" placeholder="Start typing a shul name, street address, or lat,lon…" />
+      <button class="btn" type="submit" id="btnSearch" data-i18n="searchBtn">Search</button>
+      <button class="btn secondary" type="button" id="btnGeo">&#128205; <span data-i18n="myLocation">My Location</span></button>
     </form>
     <div id="results" class="results"></div>
     <div class="examples" id="examples">
-      <span>Try:</span>
+      <span data-i18n="tryLabel">Try:</span>
     </div>
     <details class="settings" id="settingsBox">
-      <summary>Settings</summary>
+      <summary data-i18n="settings">Settings</summary>
       <div class="settings-grid">
-        <label>Hebrew year
+        <label><span data-i18n="hebrewYear">Hebrew year</span>
           <select id="setYear"></select>
         </label>
-        <label>Tzeis (minutes after shkiah)
+        <label><span data-i18n="tzeisLabel">Tzeis (minutes after shkiah)</span>
           <select id="setTzeis">
             <option value="18">18 min</option>
             <option value="20">20 min</option>
@@ -469,20 +662,20 @@
             <option value="72">72 min</option>
           </select>
         </label>
-        <label>Earliest time after molad
+        <label><span data-i18n="earliestLabel">Earliest time after molad</span>
           <select id="setMinDays">
-            <option value="3" selected>3 days (Rema)</option>
-            <option value="7">7 days (Mechaber / Kabbalah)</option>
+            <option value="3" selected data-i18n="days3">3 days (Rema)</option>
+            <option value="7" data-i18n="days7">7 days (Mechaber / Kabbalah)</option>
           </select>
         </label>
-        <label>Sof zman (latest time)
+        <label><span data-i18n="sofLabel">Sof zman (latest time)</span>
           <select id="setSof">
-            <option value="15d" selected>15 full days after molad</option>
-            <option value="half">Half the lunar month: 14d 18h 22m (Rema / Maharil)</option>
-            <option value="lel15">Through the night of the 15th (until dawn)</option>
+            <option value="15d" selected data-i18n="sof15d">15 full days after molad</option>
+            <option value="half" data-i18n="sofHalf">Half the lunar month: 14d 18h 22m (Rema / Maharil)</option>
+            <option value="lel15" data-i18n="sofLel15">Through the night of the 15th (until dawn)</option>
           </select>
         </label>
-        <label>Moon must stay clear for
+        <label><span data-i18n="clearLabel">Moon must stay clear for</span>
           <select id="setClear">
             <option value="10">10 min after tzeis</option>
             <option value="15">15 min after tzeis</option>
@@ -490,14 +683,14 @@
             <option value="30">30 min after tzeis</option>
           </select>
         </label>
-        <label>Yom Tov calendar
+        <label><span data-i18n="ytLabel">Yom Tov calendar</span>
           <select id="setIsrael">
-            <option value="auto" selected>Auto-detect</option>
-            <option value="diaspora">Diaspora (2-day Yom Tov)</option>
-            <option value="israel">Israel (1-day Yom Tov)</option>
+            <option value="auto" selected data-i18n="ytAuto">Auto-detect</option>
+            <option value="diaspora" data-i18n="ytDiaspora">Diaspora (2-day Yom Tov)</option>
+            <option value="israel" data-i18n="ytIsrael">Israel (1-day Yom Tov)</option>
           </select>
         </label>
-        <label>Max walking distance (ft)
+        <label><span data-i18n="walkLabel">Max walking distance (ft)</span>
           <select id="setWalk">
             <option value="800">800 ft (~3 min)</option>
             <option value="1200">1,200 ft (~5 min)</option>
@@ -505,15 +698,15 @@
             <option value="2200">2,200 ft (~8 min)</option>
           </select>
         </label>
-        <label>Height for buildings with no data (ft)
+        <label><span data-i18n="defHLabel">Height for buildings with no data (ft)</span>
           <input id="setDefH" type="number" min="8" max="200" step="1" value="30" />
         </label>
-        <label>Label for this place
+        <label><span data-i18n="shortLabel">Label for this place</span>
           <input id="setShort" type="text" maxlength="24" value="Shul" />
         </label>
       </div>
       <div style="margin-top:10px;display:flex;gap:8px;">
-        <button class="btn secondary" type="button" id="btnApply" disabled>Apply to current location</button>
+        <button class="btn secondary" type="button" id="btnApply" disabled data-i18n="applyBtn">Apply to current location</button>
       </div>
     </details>
   </div>
@@ -524,22 +717,22 @@
     <div id="notes" class="notes"></div>
     <div class="toolbar">
       <div class="tabs">
-        <button class="tab-btn active" data-filter="motzaei" id="tabMotzaei">Motzaei Shabbos / YK / 9 Av</button>
-        <button class="tab-btn" data-filter="all" id="tabAll">All Valid Nights</button>
+        <button class="tab-btn active" data-filter="all" id="tabAll">All Valid Nights</button>
+        <button class="tab-btn" data-filter="motzaei" id="tabMotzaei">Motzaei Shabbos / YK / 9 Av</button>
       </div>
-      <div class="tip-pill">&#128070; Click any night below to inspect its 3D building sightline &amp; 30-min time slider</div>
+      <div class="tip-pill">&#128070; <span data-i18n="tipPill">Tap any night to inspect its 3D building sightline &amp; 30-min slider</span></div>
     </div>
 
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
-            <th>Month &amp; Window</th>
-            <th>Night</th>
-            <th>Tzeis</th>
-            <th>Moon at Tzeis</th>
+            <th data-i18n="thMonth">Month &amp; Window</th>
+            <th data-i18n="thNight">Night</th>
+            <th data-i18n="thTzeis">Tzeis</th>
+            <th data-i18n="thMoon">Moon at Tzeis</th>
             <th id="thSpot">Nearest 20-Min Clear Spot</th>
-            <th style="text-align:right;">3D Check</th>
+            <th style="text-align:right;" data-i18n="thCheck">3D Check</th>
           </tr>
         </thead>
         <tbody id="calBody"></tbody>
@@ -553,10 +746,10 @@
   </div>
 
   <div class="home-links">
-    <div class="disclaimer">
+    <div class="disclaimer" data-i18n-html="disclaimerHtml">
       <strong>Disclaimer:</strong> For planning purposes only &mdash; always verify zmanim and halachic times with your local rav or shul. Building heights outside NYC are often estimated from OpenStreetMap, and trees, scaffolding, and cloud cover are not modeled.
     </div>
-    <div>
+    <div data-i18n-html="footerCreditHtml">
       Built by Aaron Priven &bull;
       Feedback or bug report? <a href="https://github.com/aaronhpriven/levanah-sightlines/issues" target="_blank" rel="noopener noreferrer">Open an issue on GitHub</a> &bull;
       Data: NYC Open Data, &copy; OpenStreetMap contributors, Open-Meteo, Photon.
@@ -564,14 +757,41 @@
   </div>
 </div>
 
+<!-- ==================== FIND THE MOON NOW OVERLAY ==================== -->
+<div id="nowOverlay">
+  <div class="now-modal">
+    <div class="now-top">
+      <h2>&#127769; <span data-i18n="nowTitle">Find the Moon Right Now</span></h2>
+      <button id="btnNowClose" class="ctrl" data-i18n="nowClose">Close</button>
+    </div>
+    <div class="now-loc-row">
+      <span id="nowLocInfo"></span>
+      <button id="btnNowGps" class="ctrl" type="button">&#128205; <span data-i18n="nowUseGps">Use My Live GPS</span></button>
+    </div>
+    <div id="nowWindowPill" class="now-pill neutral"></div>
+    <div class="now-compass-box"><canvas id="cNow"></canvas></div>
+    <div id="nowCue" class="now-cue"></div>
+    <div class="now-stats">
+      <div class="now-stat"><div class="k" data-i18n="nowDirection">Direction</div><div class="v" id="nowDirVal">—</div></div>
+      <div class="now-stat"><div class="k" data-i18n="nowAltitude">Elevation</div><div class="v" id="nowAltVal">—</div></div>
+      <div class="now-stat"><div class="k" data-i18n="nowIllum">Illumination</div><div class="v" id="nowIllumVal">—</div></div>
+    </div>
+    <div class="now-alt-bar"><div id="nowAltFill"></div></div>
+    <div id="nowGuide" class="now-guide"></div>
+    <button id="btnNowCompass" class="btn" type="button" style="width:100%">&#129517; <span data-i18n="nowEnableCompass">Enable Live Phone Compass</span></button>
+    <div id="nowCompassMsg" style="font-size:11.5px;color:var(--muted);text-align:center;"></div>
+    <div id="nowBuildings"></div>
+  </div>
+</div>
+
 <!-- ==================== 3D VIEWER OVERLAY ==================== -->
 <div id="viewerOverlay">
   <div class="v-header">
     <div class="v-left">
-      <button id="btnBack" class="ctrl">&larr; Calendar</button>
+      <button id="btnBack" class="ctrl">&larr; <span data-i18n="backCal">Calendar</span></button>
       <div class="btn-group">
-        <button id="btnPrev" class="ctrl">&lsaquo; Prev</button>
-        <button id="btnNext" class="ctrl">Next &rsaquo;</button>
+        <button id="btnPrev" class="ctrl">&lsaquo; <span data-i18n="prev">Prev</span></button>
+        <button id="btnNext" class="ctrl"><span data-i18n="next">Next</span> &rsaquo;</button>
       </div>
       <div class="v-title">
         <h2 id="vTitle"></h2>
@@ -585,12 +805,12 @@
   </div>
 
   <div class="timebar">
-    <button id="btnPlay" class="ctrl">&#9654; Play</button>
+    <button id="btnPlay" class="ctrl">&#9654; <span data-i18n="play">Play</span></button>
     <div class="btn-group" id="modeGroup" title="Switch between the fixed spot clear for the whole window after tzeis vs. the closest spot clear at this exact minute">
       <button id="btnModeStable" class="ctrl active">20-Min Spot</button>
-      <button id="btnModeLive" class="ctrl">Closest Now</button>
+      <button id="btnModeLive" class="ctrl" data-i18n="modeLive">Closest Now</button>
     </div>
-    <div class="timebar-label">Time: <span id="lblTime"></span></div>
+    <div class="timebar-label"><span data-i18n="timeLabel">Time:</span> <span id="lblTime"></span></div>
     <div class="slider-wrap">
       <input id="timeSlider" type="range" min="0" max="30" step="1" value="0" />
       <div class="slider-ticks">
@@ -603,13 +823,19 @@
     <div id="lblMoon" class="moon-readout"></div>
   </div>
 
+  <div class="v-mob-tabs" id="vMobTabs">
+    <button type="button" class="v-mob-tab active" data-pane="3d" data-i18n="tab3d">3D Map</button>
+    <button type="button" class="v-mob-tab" data-pane="fp" data-i18n="tabFp">Eye-Level</button>
+    <button type="button" class="v-mob-tab" data-pane="prof" data-i18n="tabProf">Elevation</button>
+  </div>
+
   <div class="v-main">
-    <div class="card">
+    <div class="card mob-active" data-pane="3d">
       <div class="card-hdr">
-        <div>3D Building Model <span class="hint">&bull; Drag to orbit, scroll/pinch to zoom</span></div>
+        <div><span data-i18n="card3dTitle">3D Building Model</span> <span class="hint">&bull; <span data-i18n="card3dHint">Drag to orbit, scroll/pinch to zoom</span></span></div>
         <div class="btn-group">
-          <button id="btnCamIso" class="ctrl active">3D Overview</button>
-          <button id="btnCamTop" class="ctrl">Top-Down</button>
+          <button id="btnCamIso" class="ctrl active" data-i18n="camIso">3D Overview</button>
+          <button id="btnCamTop" class="ctrl" data-i18n="camTop">Top-Down</button>
         </div>
       </div>
       <div class="canvas-wrap">
@@ -617,16 +843,16 @@
         <div class="legend">
           <div class="leg-row"><span class="swatch" style="background:#22c55e"></span> <span id="legSpot">Recommended Spot</span></div>
           <div class="leg-row"><span class="swatch" style="background:#ef4444"></span> <span id="legShul">Outside</span></div>
-          <div class="leg-row"><span class="swatch" style="background:#dc2626"></span> Building Blocking Ray</div>
-          <div class="leg-row"><span class="swatch" style="background:#f59e0b"></span> Closest-Clearance Building</div>
-          <div class="leg-row" id="legEst" style="display:none"><span class="swatch" style="background:#6e5fa5"></span> Estimated height (no data)</div>
+          <div class="leg-row"><span class="swatch" style="background:#dc2626"></span> <span data-i18n="legBlock">Building Blocking Ray</span></div>
+          <div class="leg-row"><span class="swatch" style="background:#f59e0b"></span> <span data-i18n="legLimit">Closest-Clearance Building</span></div>
+          <div class="leg-row" id="legEst" style="display:none"><span class="swatch" style="background:#6e5fa5"></span> <span data-i18n="legEst">Estimated height (no data)</span></div>
         </div>
       </div>
     </div>
 
-    <div class="card">
+    <div class="card" data-pane="fp">
       <div class="card-hdr">
-        <div>First-Person Eye-Level (5.5 ft) <span class="hint">&bull; Dotted = 30m path</span></div>
+        <div><span data-i18n="cardFpTitle">First-Person Eye-Level (5.5 ft)</span> <span class="hint">&bull; <span data-i18n="cardFpHint">Dotted = 30m path</span></span></div>
         <div class="btn-group">
           <button id="btnFpSpot" class="ctrl active-green">Recommended Spot</button>
           <button id="btnFpShul" class="ctrl">Outside</button>
@@ -635,9 +861,9 @@
       <div class="canvas-wrap"><canvas id="cFp"></canvas></div>
     </div>
 
-    <div class="card profile-card">
+    <div class="card profile-card" data-pane="prof">
       <div class="card-hdr">
-        <div id="profTitle">2D Elevation Cross-Section</div>
+        <div id="profTitle" data-i18n="cardProfTitle">2D Elevation Cross-Section</div>
         <div class="btn-group">
           <button id="btnProfSpot" class="ctrl active-green">Recommended Spot</button>
           <button id="btnProfShul" class="ctrl">Outside</button>
@@ -648,11 +874,13 @@
   </div>
 </div>
 
-<script src="astronomy.js?v=10"></script>
-<script src="geodata.js?v=10"></script>
-<script src="app.js?v=10"></script>
-<script src="pdf.js?v=10"></script>
-<script src="viewer.js?v=10"></script>
+<script src="i18n.js?v=15"></script>
+<script src="astronomy.js?v=15"></script>
+<script src="geodata.js?v=15"></script>
+<script src="app.js?v=15"></script>
+<script src="pdf.js?v=15"></script>
+<script src="viewer.js?v=15"></script>
+<script src="now.js?v=15"></script>
 <script data-goatcounter="https://levanah-sightlines.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </body>
 </html>

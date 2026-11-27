@@ -14,10 +14,10 @@ let SETTINGS = null;
 let loadToken = 0;
 
 const EXAMPLES = [
-  { text: "Young Israel of the West Side (NYC)", lat: 40.790886, lon: -73.973311, name: "Young Israel of the West Side", label: "210 West 91st Street, New York, NY", short: "Shul" },
-  { text: "Lakewood, NJ (BMG)", lat: 40.08215, lon: -74.20955, name: "Beth Medrash Govoha", label: "Beth Medrash Govoha, Lakewood, NJ", short: "Yeshiva" },
-  { text: "Golders Green, London", lat: 51.57227, lon: -0.19529, name: "Golders Green", label: "Golders Green Road, London, UK", short: "Location" },
-  { text: "Jerusalem (Great Synagogue)", lat: 31.77612, lon: 35.21713, name: "Great Synagogue", label: "King George St 56, Jerusalem", short: "Shul" },
+  { key: "exYiws", lat: 40.790886, lon: -73.973311, name: "Young Israel of the West Side", label: "210 West 91st Street, New York, NY", short: "Shul" },
+  { key: "exLakewood", lat: 40.08215, lon: -74.20955, name: "Beth Medrash Govoha", label: "Beth Medrash Govoha, Lakewood, NJ", short: "Yeshiva" },
+  { key: "exLondon", lat: 51.57227, lon: -0.19529, name: "Golders Green", label: "Golders Green Road, London, UK", short: "Location" },
+  { key: "exJerusalem", lat: 31.77612, lon: 35.21713, name: "Great Synagogue", label: "King George St 56, Jerusalem", short: "Shul" },
 ];
 
 const $ = id => document.getElementById(id);
@@ -204,16 +204,14 @@ async function runSearch(q, explicit) {
   if (q.length < (explicit ? 1 : 3)) { renderResults([]); return; }
   searchAbort = new AbortController();
   const sig = searchAbort.signal;
-  renderResults(searchResults, `<span class="spinner"></span>Searching OpenStreetMap${/new york|nyc|manhattan|brooklyn|queens|bronx|staten/i.test(q) ? " and NYC GeoSearch" : ""}…`);
+  renderResults(searchResults, `<span class="spinner"></span>${/new york|nyc|manhattan|brooklyn|queens|bronx|staten/i.test(q) ? I18N.t("searchingNycText") : I18N.t("searchingText")}`);
   $("btnSearch").disabled = explicit;
   try {
     const res = await Geo.geocode(q, { autocomplete: !explicit, signal: sig });
     if (seq !== searchSeq) return;
     if (explicit && res.length === 1 && res[0].source === "Coordinates") { renderResults([]); choosePlace(res[0]); return; }
     if (!res.length) {
-      renderResults([], explicit
-        ? "No matches found. Try adding the city, or enter coordinates as <code>lat, lon</code>."
-        : "No matches yet &mdash; keep typing, or press Enter for a wider search.");
+      renderResults([], explicit ? I18N.t("noMatchesFound") : I18N.t("noMatchesYet"));
       return;
     }
     renderResults(res);
@@ -381,8 +379,8 @@ function showResults() {
   const tzNote = MODEL.tz;
   const israel = SETTINGS.israel === "auto" ? Astro.isLikelyIsrael(PLACE.lat, PLACE.lon) : SETTINGS.israel === "israel";
   $("placeBadge").style.display = "block";
-  $("placeBadge").innerHTML = `<strong>${esc(PLACE.name)}</strong><br/>${esc(PLACE.label !== PLACE.name ? PLACE.label : `${PLACE.lat.toFixed(5)}, ${PLACE.lon.toFixed(5)}`)}
-    <div class="src-line">${esc(MODEL.nycMode ? "NYC 3D Building Model" : "OpenStreetMap 3D Model")} &bull; ${esc(tzNote)}</div>`;
+  $("placeBadge").innerHTML = `<strong>${esc(PLACE.name)}</strong><br/><span dir="ltr">${esc(PLACE.label !== PLACE.name ? PLACE.label : `${PLACE.lat.toFixed(5)}, ${PLACE.lon.toFixed(5)}`)}</span>
+    <div class="src-line">${esc(MODEL.nycMode ? "NYC 3D Building Model" : "OpenStreetMap 3D Model")} &bull; <span dir="ltr">${esc(tzNote)}</span></div>`;
   $("btnShare").style.display = "inline-block";
 
   const notes = [];
@@ -392,22 +390,28 @@ function showResults() {
     else if (hs.pctLv >= 5) notes.push({ cls: "info", text: `${hs.pctLv}% of building heights were estimated from floor counts (≈10 ft per floor).` });
   }
   for (const w of MODEL.warnings) notes.push({ cls: "", text: w });
-  $("notes").innerHTML = notes.map(n => `<div class="note ${n.cls}">${esc(n.text)}</div>`).join("") +
-    (lastLoadSummary ? `<details class="note info loadlog-summary"><summary>Loaded live in ${lastLoadSummary.total.toFixed(0)} s &mdash; show lookup details</summary><div class="status loadlog show" style="margin:8px 0 0">${lastLoadSummary.html}</div></details>` : "");
+  const estHint = (!MODEL.nycMode && hs.pctEst >= 5) ? ` &bull; <span style="color:#fde68a">&#9888; ${esc(I18N.t("approxHeightsNote"))}</span>` : "";
+  const summaryLabel = lastLoadSummary
+    ? `${esc(I18N.t("loadedSummary", { s: lastLoadSummary.total.toFixed(0) }))}${estHint}`
+    : `${esc(MODEL.source)}${estHint}`;
+  const notesHtml = notes.map(n => `<div class="note ${n.cls}" style="margin-top:6px">${esc(n.text)}</div>`).join("");
+  const logHtml = lastLoadSummary ? `<div class="status loadlog show" style="margin:8px 0 0">${lastLoadSummary.html}</div>` : "";
+  $("notes").innerHTML = `<details class="note info loadlog-summary"><summary>${summaryLabel}</summary>${notesHtml}${logHtml}</details>`;
 
   const motz = NIGHTS.filter(n => n.is_motzaei).length;
-  $("tabMotzaei").textContent = `Motzaei Shabbos / YK / 9 Av (${motz})`;
-  $("tabAll").textContent = `All Valid Nights (${NIGHTS.length})`;
+  $("tabMotzaei").textContent = I18N.t("tabMotzaei", { n: motz });
+  $("tabAll").textContent = I18N.t("tabAll", { n: NIGHTS.length });
   $("footRule").textContent = `Year ${SETTINGS.year} • Window: ${SETTINGS.minDays} days after molad (after Yom Kippur in Tishrei, after Tisha B'Av in Av) until ${SOF_LABEL[SETTINGS.sofZman]} • Tzeis = Shkiah + ${SETTINGS.tzeis} min • ${israel ? "Israel (1-day Yom Tov)" : "Diaspora (2-day Yom Tov)"}`;
   $("footData").textContent = `+4 ft parapet buffer, ≥1.5° clearance, 5.5 ft eye level, clear for ${SETTINGS.clearMin} min after tzeis`;
-  $("thSpot").textContent = `Nearest ${SETTINGS.clearMin}-Min Clear Spot`;
-  $("btnModeStable").textContent = `${SETTINGS.clearMin}-Min Spot`;
+  $("thSpot").textContent = I18N.t("thSpot", { n: SETTINGS.clearMin });
+  $("btnModeStable").textContent = I18N.t("modeStable", { n: SETTINGS.clearMin });
   $("btnPdf").style.display = "inline-block";
   $("calSection").classList.add("show");
-  renderCalendar();
+  const deepLink = location.hash && location.hash.length > 1;
+  renderCalendar(!deepLink);
   updateUrl();
 
-  if (location.hash && location.hash.length > 1) {
+  if (deepLink) {
     const found = NIGHTS.find(n => n.civil_date === location.hash.slice(1));
     if (found) openViewer(found.id);
   }
@@ -429,6 +433,7 @@ function updateUrl() {
   if (SETTINGS.israel !== "auto") p.set("yt", SETTINGS.israel);
   if (SETTINGS.walkMaxFt !== 1650) p.set("walk", SETTINGS.walkMaxFt);
   if (SETTINGS.defaultHeightFt !== 30) p.set("defh", SETTINGS.defaultHeightFt);
+  if (I18N.code !== "en") p.set("lang", I18N.code);
   history.replaceState(null, "", `${location.pathname}?${p.toString()}${location.hash}`);
 }
 
@@ -506,7 +511,7 @@ function traceRay(ox, oy, groundFt, azDeg, altDeg, maxDist = 1800) {
 }
 
 // ---------------------------------------------------------------- calendar table
-let currentFilter = "motzaei";
+let currentFilter = "all";
 const calBody = $("calBody");
 
 function getFilteredNights() {
@@ -514,50 +519,69 @@ function getFilteredNights() {
 }
 
 function walkStr(ft) {
-  if (ft <= 20) return "0 min";
+  if (ft <= 20) return I18N.t("walkZero");
   const mins = Math.max(1, Math.round(ft / 260));
-  return `${ft.toLocaleString()} ft (~${mins} min)`;
+  return I18N.t("walkFmt", { ft: ft.toLocaleString(), m: mins });
 }
 
-function renderCalendar() {
+function renderCalendar(scrollToNext = false) {
   calBody.innerHTML = "";
   const list = getFilteredNights();
   if (!list.length) {
-    calBody.innerHTML = `<tr><td colspan="6" style="color:var(--muted);padding:18px;">No nights in this category.</td></tr>`;
+    calBody.innerHTML = `<tr><td colspan="6" style="color:var(--muted);padding:18px;">${esc(I18N.t("noNights"))}</td></tr>`;
     return;
   }
+  const viewArrow = I18N.dir === "rtl" ? "&larr;" : "&rarr;";
+  const nowMs = Date.now();
+  const isUpcoming = n => nowMs < (n.end_ms || (n.eval_ms + 12 * 3600000));
+  const nextNight = list.find(isUpcoming) || null;
+  let nextRowEl = null;
+
   for (const n of list) {
     const f0 = n.frames[0];
     let tagHtml = "";
     if (n.special_tag) {
       const tagCls = n.special_tag === "Motzaei YK" ? "tag-yk" : (n.special_tag === "Motzaei 9 Av" ? "tag-9a" : "tag-ms");
-      tagHtml = `<span class="tag ${tagCls}">${n.special_tag}</span>`;
+      tagHtml = `<span class="tag ${tagCls}">${esc(I18N.tag(n.special_tag))}</span>`;
+    }
+    if (nextNight && n.id === nextNight.id) {
+      tagHtml = `<span class="tag tag-next">${esc(I18N.t("nextUpTag"))}</span>` + tagHtml;
     }
     const tr = document.createElement("tr");
+    if (nextNight && n.id === nextNight.id) {
+      tr.className = "next-night";
+      nextRowEl = tr;
+    } else if (!isUpcoming(n)) {
+      tr.className = "past-night";
+    }
     tr.onclick = () => openViewer(n.id);
 
     let spotHtml;
     if (n.spot) {
-      const waitNote = n.wait_min ? ` <span style="color:#fcd34d">(at ${esc(n.wait_time_str)})</span>` : "";
+      const waitNote = n.wait_min ? ` <span style="color:#fcd34d">${esc(I18N.t("atWaitTime", { t: n.wait_time_str }))}</span>` : "";
       spotHtml = `<div class="spot-name">${esc(n.spot.short_name)}${waitNote}</div>
-        <div class="spot-meta">${walkStr(n.spot.walk_ft)} &bull; min +${n.spot.min_clr.toFixed(1)}&deg; clear (0&ndash;${SETTINGS.clearMin}m)</div>`;
+        <div class="spot-meta">${esc(I18N.t("clearWindowMeta", { walk: walkStr(n.spot.walk_ft), clr: n.spot.min_clr.toFixed(1), m: SETTINGS.clearMin }))}</div>`;
     } else if (n.moon_alt_deg <= 0.5) {
-      spotHtml = `<div class="spot-none">Moon not up at tzeis</div>
-        <div class="spot-meta">${esc(n.moon_note || `Alt ${f0[1].toFixed(1)}°`)} &mdash; use another night</div>`;
+      spotHtml = `<div class="spot-none">${esc(I18N.t("moonNotUp"))}</div>
+        <div class="spot-meta">${esc(n.moon_note || I18N.t("altShort", { n: f0[1].toFixed(1) }))} &mdash; ${esc(I18N.t("useAnotherNight"))}</div>`;
     } else {
-      spotHtml = `<div class="spot-none">Blocked within ${MODEL.walkMax.toLocaleString()} ft</div>
-        <div class="spot-meta">Moon too low (${f0[1].toFixed(1)}&deg;) &mdash; use earlier night</div>`;
+      spotHtml = `<div class="spot-none">${esc(I18N.t("blockedWithin", { n: MODEL.walkMax.toLocaleString() }))}</div>
+        <div class="spot-meta">${esc(I18N.t("moonTooLow", { alt: f0[1].toFixed(1) }))}</div>`;
     }
 
+    const compLoc = I18N.compass(f0[3]);
     tr.innerHTML = `
-      <td><div class="m-name">${n.month_name}</div><div class="m-win">${n.win_earliest} &ndash; ${n.win_latest}</div></td>
-      <td><strong>${n.date_disp}</strong>${tagHtml}<div class="m-win">${n.heb_date}</div></td>
-      <td><strong>${n.tzeis_str}</strong></td>
-      <td><strong>${f0[3]} (${f0[0].toFixed(1)}&deg;)</strong><div class="m-win">Alt ${f0[1].toFixed(1)}&deg; &bull; ${n.illum_pct}% lit</div></td>
-      <td>${spotHtml}</td>
-      <td style="text-align:right;"><button class="view-btn">View 3D &rarr;</button></td>
+      <td class="td-month"><div class="m-name">${esc(I18N.month(n.month_name))}</div><div class="m-win">${esc(n.win_earliest)} &ndash; ${esc(n.win_latest)}</div></td>
+      <td class="td-night"><strong>${esc(n.date_disp)}</strong>${tagHtml}<div class="m-win">${esc(I18N.hebDate(n.heb_date))}</div></td>
+      <td class="td-tzeis"><strong>${esc(n.tzeis_str)}</strong></td>
+      <td class="td-moon"><strong>${esc(compLoc)} (${f0[0].toFixed(1)}&deg;)</strong><div class="m-win">${esc(I18N.t("altShort", { n: f0[1].toFixed(1) }))} &bull; ${esc(I18N.t("litPct", { n: n.illum_pct }))}</div></td>
+      <td class="td-spot">${spotHtml}</td>
+      <td class="td-action" style="text-align:right;"><button class="view-btn">${esc(I18N.t("view3d"))} ${viewArrow}</button></td>
     `;
     calBody.appendChild(tr);
+  }
+  if (scrollToNext && nextRowEl) {
+    requestAnimationFrame(() => nextRowEl.scrollIntoView({ behavior: "smooth", block: "start" }));
   }
 }
 
@@ -566,23 +590,69 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
     document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     currentFilter = btn.dataset.filter;
-    renderCalendar();
+    renderCalendar(true);
   };
 });
 
 // ---------------------------------------------------------------- init
+function localizeDynamicOptions() {
+  const cur = Astro.currentHebrewYear(new Date());
+  for (const o of $("setYear").options) {
+    const y = parseInt(o.value, 10);
+    o.textContent = y === cur ? `${y} (${I18N.t("currentTag")})` : String(y);
+  }
+  for (const o of $("setTzeis").options) {
+    o.textContent = `${o.value} ${I18N.t("minUnit")}`;
+  }
+  for (const o of $("setClear").options) {
+    o.textContent = I18N.t("minAfterTzeis", { n: o.value });
+  }
+  for (const o of $("setWalk").options) {
+    const ft = parseInt(o.value, 10);
+    o.textContent = walkStr(ft);
+  }
+  document.querySelectorAll("#examples .chip").forEach((c, i) => {
+    if (EXAMPLES[i]) c.textContent = I18N.t(EXAMPLES[i].key);
+  });
+}
+
 function init() {
   const params = new URLSearchParams(location.search);
+  I18N.init(params);
   initSettingsUI(params);
 
   const ex = $("examples");
   for (const e of EXAMPLES) {
     const c = document.createElement("span");
     c.className = "chip";
-    c.textContent = e.text;
+    c.textContent = I18N.t(e.key);
     c.onclick = () => { renderResults([]); choosePlace(e, e.short); };
     ex.appendChild(c);
   }
+  localizeDynamicOptions();
+
+  const langSel = $("langSelect");
+  if (langSel) {
+    langSel.value = I18N.code;
+    langSel.onchange = () => {
+      I18N.setLang(langSel.value);
+      if (PLACE) updateUrl();
+    };
+  }
+  I18N.onChange(() => {
+    localizeDynamicOptions();
+    if (NIGHTS.length && MODEL && SETTINGS) {
+      const motz = NIGHTS.filter(n => n.is_motzaei).length;
+      $("tabMotzaei").textContent = I18N.t("tabMotzaei", { n: motz });
+      $("tabAll").textContent = I18N.t("tabAll", { n: NIGHTS.length });
+      $("thSpot").textContent = I18N.t("thSpot", { n: SETTINGS.clearMin });
+      $("btnModeStable").textContent = I18N.t("modeStable", { n: SETTINGS.clearMin });
+      renderCalendar();
+      if (typeof recomputeAndRender === "function" && $("viewerOverlay").classList.contains("open")) {
+        recomputeAndRender();
+      }
+    }
+  });
 
   initSearchBox();
   $("searchForm").addEventListener("submit", ev => {
@@ -614,11 +684,11 @@ function init() {
   $("btnShare").onclick = async () => {
     try {
       await navigator.clipboard.writeText(location.href);
-      $("btnShare").textContent = "✓ Link Copied";
+      $("btnShare").textContent = "✓ " + I18N.t("linkCopied");
     } catch {
-      prompt("Copy this link:", location.href);
+      prompt(I18N.t("copyLink") + ":", location.href);
     }
-    setTimeout(() => { $("btnShare").innerHTML = "&#128279; Copy Link"; }, 1800);
+    setTimeout(() => { $("btnShare").innerHTML = `&#128279; <span data-i18n="copyLink">${esc(I18N.t("copyLink"))}</span>`; }, 1800);
   };
   $("btnGeo").onclick = () => {
     if (!navigator.geolocation) { setStatus("Geolocation isn't available in this browser.", "error"); return; }

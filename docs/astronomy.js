@@ -656,6 +656,7 @@ const Astro = (() => {
                 special_tag: specialTag,
                 tzeis_str: formatTime(evalMs, tzName),
                 eval_ms: evalMs,
+                end_ms: Math.min(getSunriseUtcMs(addUtcDays(d, 1), lat, lon), latestMs),
                 latest_ms: latestMs,
                 wait_min: 0,
                 wait_time_str: null,
@@ -676,6 +677,80 @@ const Astro = (() => {
     return nights;
   }
 
+  // Instant status for "Find the Moon Right Now" at arbitrary (lat, lon, nowMs)
+  function getNowStatus({ lat, lon, elevM = 25, tzName = null, minDaysAfterMolad = 3, sofZman = "15d", tzeisMinutes = 50, nowMs = Date.now() }) {
+    const tz = tzName || Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const moon = moonAltAz(nowMs, lat, lon, elevM);
+    const localIso = localIsoDate(nowMs, tz);
+    const dCivil = parseIsoUtc(localIso);
+    const sunsetMs = getSunsetUtcMs(dCivil, lat, lon);
+    const isAfterSunset = nowMs >= sunsetMs;
+    const hebDateIso = isAfterSunset ? isoDateStr(addUtcDays(dCivil, 1)) : localIso;
+
+    const hYear = currentHebrewYear(new Date(nowMs));
+    const hebMap = buildHebrewDateMap(hYear);
+    for (const [k, v] of buildHebrewDateMap(hYear - 1).entries()) if (!hebMap.has(k)) hebMap.set(k, v);
+    for (const [k, v] of buildHebrewDateMap(hYear + 1).entries()) if (!hebMap.has(k)) hebMap.set(k, v);
+    const hebInfo = hebMap.get(hebDateIso) || { mNum: 0, mName: "", day: 0 };
+
+    // Check if nowMs is inside any Kiddush Levanah window around hYear
+    let inWindow = false;
+    for (const y of [hYear - 1, hYear, hYear + 1]) {
+      const mList = hebrewYearMonths(y);
+      for (let idx = 0; idx < mList.length; idx++) {
+        const [mNum] = mList[idx];
+        const moladMs = getMoladUtcMs(y, idx);
+        let earliestMs = moladMs + minDaysAfterMolad * 86400000.0;
+        let latestMs;
+        if (sofZman === "half") latestMs = moladMs + (CHALAKIM_PER_MONTH / 2) * (86400000.0 / CHALAKIM_PER_DAY);
+        else if (sofZman === "lel15") {
+          let d14 = null;
+          for (const [iso, info] of hebMap.entries()) { if (info.mNum === mNum && info.day === 14) { d14 = parseIsoUtc(iso); break; } }
+          latestMs = d14 ? getSunriseUtcMs(addUtcDays(d14, 1), lat, lon) - 72 * 60000 : moladMs + 15 * 86400000.0;
+        } else latestMs = moladMs + 15 * 86400000.0;
+
+        if (mNum === 7) {
+          const ykTzeis = getSunsetUtcMs(addUtcDays(roshHashanahUtcDate(y), 9), lat, lon) + tzeisMinutes * 60000;
+          if (ykTzeis > earliestMs) earliestMs = ykTzeis;
+        }
+        if (nowMs >= earliestMs && nowMs <= latestMs) { inWindow = true; break; }
+      }
+      if (inWindow) break;
+    }
+
+    // Find next moonrise / moonset over next 24h from nowMs
+    const stepMs = 15 * 60000;
+    let riseMs = null, setMs = null;
+    let prevT = nowMs, prevAlt = moon.alt;
+    for (let i = 1; i <= 96; i++) {
+      const curT = nowMs + i * stepMs;
+      const curAlt = moonAltAz(curT, lat, lon, elevM).alt;
+      if (prevAlt <= 0 && curAlt > 0 && riseMs === null) {
+        let lo = prevT, hi = curT;
+        for (let k = 0; k < 10; k++) { const mid = 0.5 * (lo + hi); if (moonAltAz(mid, lat, lon, elevM).alt <= 0) lo = mid; else hi = mid; }
+        riseMs = 0.5 * (lo + hi);
+      } else if (prevAlt > 0 && curAlt <= 0 && setMs === null) {
+        let lo = prevT, hi = curT;
+        for (let k = 0; k < 10; k++) { const mid = 0.5 * (lo + hi); if (moonAltAz(mid, lat, lon, elevM).alt > 0) lo = mid; else hi = mid; }
+        setMs = 0.5 * (lo + hi);
+      }
+      if (riseMs && setMs) break;
+      prevT = curT; prevAlt = curAlt;
+    }
+
+    return {
+      alt: moon.alt,
+      az: moon.az,
+      illum: Math.round(moon.illum),
+      compass: compassDirection(moon.az),
+      hebDate: hebInfo.day ? `${hebInfo.day} ${hebInfo.mName}` : "",
+      inWindow,
+      riseMs,
+      setMs,
+      tz,
+    };
+  }
+
   return {
     DEG,
     RAD,
@@ -685,5 +760,6 @@ const Astro = (() => {
     compassDirection,
     formatTime,
     computeYear,
+    getNowStatus,
   };
 })();

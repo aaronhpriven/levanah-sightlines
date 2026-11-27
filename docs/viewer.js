@@ -27,7 +27,7 @@ function stopPlay() {
   if (playTimer) {
     clearInterval(playTimer);
     playTimer = null;
-    btnPlay.innerHTML = "&#9654; Play";
+    btnPlay.innerHTML = `&#9654; ${I18N.t("play")}`;
     btnPlay.classList.remove("active");
   }
 }
@@ -112,15 +112,16 @@ function recomputeAndRender() {
   );
 
   // Update header & pills
-  const tagPart = curNight.special_tag ? ` — ${curNight.special_tag}` : "";
-  document.getElementById("vTitle").textContent = `${curNight.date_disp} (${curNight.heb_date} ${curNight.hebrew_year})${tagPart}`;
-  const waitTxt = curNight.wait_min ? ` • Showing +${curNight.wait_min}m clear window` : "";
-  document.getElementById("vSub").textContent = `${PLACE.label} • Tzeis ${curNight.tzeis_str} • ${curNight.illum_pct}% lit${waitTxt}`;
+  const tagPart = curNight.special_tag ? ` — ${I18N.tag(curNight.special_tag)}` : "";
+  document.getElementById("vTitle").textContent = `${curNight.date_disp} (${I18N.hebDate(curNight.heb_date)} ${curNight.hebrew_year})${tagPart}`;
+  const waitTxt = curNight.wait_min ? ` • +${curNight.wait_min}m` : "";
+  document.getElementById("vSub").textContent = `${PLACE.label} • ${I18N.t("thTzeis")} ${curNight.tzeis_str} • ${I18N.t("litPct", { n: curNight.illum_pct })}${waitTxt}`;
 
-  document.getElementById("lblTime").textContent = `${timeStr} (+${frameIdx} min)`;
-  document.getElementById("lblMoon").innerHTML = `Moon: <strong>${compass} (${az.toFixed(1)}&deg;)</strong> &bull; Alt <strong>${alt.toFixed(1)}&deg;</strong>`;
+  const compLoc = I18N.compass(compass);
+  document.getElementById("lblTime").textContent = `${timeStr} (+${frameIdx}m)`;
+  document.getElementById("lblMoon").innerHTML = `${I18N.t("moonLabel")} <strong>${compLoc} (${az.toFixed(1)}&deg;)</strong> &bull; <strong>${alt.toFixed(1)}&deg;</strong>`;
 
-  const modeLbl = spotMode === "live" ? "Closest Now" : `${SETTINGS.clearMin}-Min Spot`;
+  const modeLbl = spotMode === "live" ? I18N.t("modeLive") : I18N.t("modeStable", { n: SETTINGS.clearMin });
   const pillSpot = document.getElementById("pillSpot");
   const btnFpSpot = document.getElementById("btnFpSpot");
   const btnProfSpot = document.getElementById("btnProfSpot");
@@ -140,21 +141,21 @@ function recomputeAndRender() {
   } else {
     pillSpot.style.display = "flex";
     pillSpot.className = "pill blocked";
-    pillSpot.innerHTML = `<span>${modeLbl}:</span> <strong>No clear spot within ${MODEL.walkMax.toLocaleString()} ft</strong>`;
+    pillSpot.innerHTML = `<span>${modeLbl}:</span> <strong>${I18N.t("noSpotWithin", { n: MODEL.walkMax.toLocaleString() })}</strong>`;
     btnFpSpot.style.display = "none";
     btnProfSpot.style.display = "none";
-    document.getElementById("legSpot").textContent = `No Clear Spot Within ${MODEL.walkMax.toLocaleString()} ft`;
+    document.getElementById("legSpot").textContent = I18N.t("noSpotWithin", { n: MODEL.walkMax.toLocaleString() });
   }
 
   const shc = curShulTrace.clearance;
   const pillShul = document.getElementById("pillShul");
   pillShul.className = "pill " + (curShulTrace.isClear ? "clear" : "blocked");
-  pillShul.innerHTML = `<span>${PLACE.atLabel}:</span> <strong>${curShulTrace.isClear ? "Clear" : "Blocked"} (${shc >= 0 ? "+" : ""}${shc.toFixed(1)}&deg;)</strong>`;
+  pillShul.innerHTML = `<span>${PLACE.atLabel}:</span> <strong>${curShulTrace.isClear ? I18N.t("clearWord") : I18N.t("blockedWord")} (${shc >= 0 ? "+" : ""}${shc.toFixed(1)}&deg;)</strong>`;
   document.getElementById("legShul").textContent = `${PLACE.atLabel} (${shc >= 0 ? "+" : ""}${shc.toFixed(1)}°)`;
   document.getElementById("btnProfShul").textContent = `${PLACE.atLabel} (${shc >= 0 ? "+" : ""}${shc.toFixed(1)}°)`;
   document.getElementById("btnFpShul").className = "ctrl " + (activeView === "shul" ? (curShulTrace.isClear ? "active-green" : "active-red") : "");
   document.getElementById("btnProfShul").className = "ctrl " + (activeView === "shul" ? (curShulTrace.isClear ? "active-green" : "active-red") : "");
-  document.getElementById("profTitle").innerHTML = `2D Elevation Cross-Section Along Azimuth ${az.toFixed(1)}&deg; (${compass}) <span class="hint">&bull; Dashed cap = +4 ft parapet</span>`;
+  document.getElementById("profTitle").innerHTML = `${I18N.t("cardProfAz", { az: az.toFixed(1), comp: compLoc })} <span class="hint">&bull; ${I18N.t("cardProfHint")}</span>`;
 
   draw3D();
   drawFirstPerson();
@@ -164,6 +165,7 @@ function recomputeAndRender() {
 // ---------------- CANVAS HELPERS ----------------
 function resizeCanvas(canvas) {
   const rect = canvas.parentElement.getBoundingClientRect();
+  if (rect.width < 2 || rect.height < 2) return null;
   const dpr = window.devicePixelRatio || 1;
   canvas.width = Math.max(1, Math.floor(rect.width * dpr));
   canvas.height = Math.max(1, Math.floor(rect.height * dpr));
@@ -194,7 +196,9 @@ function makeCameraBasis(camPos, tx, ty, tz) {
 
 function draw3D() {
   if (!curNight || !curShulTrace) return;
-  const { w, h, ctx } = resizeCanvas(c3d);
+  const sz = resizeCanvas(c3d);
+  if (!sz) return;
+  const { w, h, ctx } = sz;
   const [az, alt] = curNight.frames[frameIdx];
   const rayDx = Math.sin(az * DEG), rayDy = Math.cos(az * DEG);
   const tanAlt = Math.tan(Math.max(0.5, alt) * DEG);
@@ -428,7 +432,9 @@ function draw3D() {
 }
 
 function drawFirstPerson() {
-  const { w, h, ctx } = resizeCanvas(cFp);
+  const sz = resizeCanvas(cFp);
+  if (!sz) return;
+  const { w, h, ctx } = sz;
   const tr = (activeView === "spot" && curSpotTrace) ? curSpotTrace : curShulTrace;
   const [az, alt] = curNight.frames[frameIdx];
   const ox = tr.ox, oy = tr.oy, oz = tr.oz;
@@ -515,8 +521,8 @@ function drawFirstPerson() {
   ctx.fillText(fe[2], toX(fe[0]) + 10, toY(fe[1]) - 6);
 
   const badge = tr.isClear
-    ? `CLEAR: Moon +${tr.clearance.toFixed(1)}° above skyline`
-    : (tr.clearance >= 0 ? `TIGHT: +${tr.clearance.toFixed(1)}° (< 1.5° margin)` : `BLOCKED: Building rises ${Math.abs(tr.clearance).toFixed(1)}° above Moon`);
+    ? I18N.t("fpClearBadge", { c: tr.clearance.toFixed(1) })
+    : (tr.clearance >= 0 ? I18N.t("fpTightBadge", { c: tr.clearance.toFixed(1) }) : I18N.t("fpBlockedBadge", { c: Math.abs(tr.clearance).toFixed(1) }));
   ctx.font = "700 12px -apple-system, sans-serif";
   const bw = ctx.measureText(badge).width + 18;
   ctx.fillStyle = tr.isClear ? "rgba(21,128,61,0.92)" : "rgba(185,28,28,0.92)";
@@ -525,7 +531,9 @@ function drawFirstPerson() {
 }
 
 function drawProfile() {
-  const { w, h, ctx } = resizeCanvas(cProf);
+  const sz = resizeCanvas(cProf);
+  if (!sz) return;
+  const { w, h, ctx } = sz;
   const tr = (activeView === "spot" && curSpotTrace) ? curSpotTrace : curShulTrace;
   const alt = curNight.frames[frameIdx][1];
   const tanAlt = Math.tan(Math.max(0.5, alt) * DEG);
@@ -690,7 +698,7 @@ slider.addEventListener("input", e => { frameIdx = parseInt(e.target.value, 10);
 btnPlay.onclick = () => {
   if (playTimer) { stopPlay(); return; }
   if (frameIdx >= 30) frameIdx = 0;
-  btnPlay.innerHTML = "&#9646;&#9646; Pause";
+  btnPlay.innerHTML = `&#9646;&#9646; ${I18N.t("pause")}`;
   btnPlay.classList.add("active");
   playTimer = setInterval(() => {
     frameIdx = (frameIdx + 1) % 31;
@@ -698,5 +706,18 @@ btnPlay.onclick = () => {
     recomputeAndRender();
   }, 240);
 };
+
+// Mobile single-pane tab switcher (3D Map / Eye-Level / Elevation)
+document.querySelectorAll(".v-mob-tab").forEach(btn => {
+  btn.onclick = () => {
+    const pane = btn.dataset.pane;
+    document.querySelectorAll(".v-mob-tab").forEach(b => b.classList.toggle("active", b.dataset.pane === pane));
+    document.querySelectorAll(".v-main > .card").forEach(c => c.classList.toggle("mob-active", c.dataset.pane === pane));
+    if (overlay.classList.contains("open")) {
+      recomputeAndRender();
+      requestAnimationFrame(() => recomputeAndRender());
+    }
+  };
+});
 
 window.addEventListener("resize", () => { if (overlay.classList.contains("open")) recomputeAndRender(); });
